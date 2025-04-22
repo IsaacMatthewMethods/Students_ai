@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student AI Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fb;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background-color: #4285f4;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header h1 {
+            font-size: 24px;
+        }
+        
+        .menu-button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+        
+        .menu-button:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background-color: white;
+            border-right: 1px solid #e0e0e0;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+        }
+        
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .chat-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .input-container {
+            padding: 15px;
+            background-color: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .input-field {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 24px;
+            font-size: 16px;
+            outline: none;
+            transition: border 0.3s;
+        }
+        
+        .input-field:focus {
+            border-color: #4285f4;
+        }
+        
+        .send-button {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            margin-left: 10px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.3s;
+        }
+        
+        .send-button:hover {
+            background-color: #3367d6;
+        }
+        
+        .message {
+            max-width: 80%;
+            margin-bottom: 15px;
+            padding: 12px 16px;
+            border-radius: 18px;
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+        
+        .user-message {
+            align-self: flex-end;
+            background-color: #4285f4;
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+        
+        .bot-message {
+            align-self: flex-start;
+            background-color: white;
+            color: #333;
+            border-bottom-left-radius: 5px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        
+        .bot-message pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        
+        .bot-message code {
+            font-family: monospace;
+        }
+        
+        .feature-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .feature-card h3 {
+            color: #4285f4;
+            margin-bottom: 8px;
+        }
+        
+        .feature-card p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            align-self: flex-start;
+            background-color: #f0f0f0;
+            padding: 8px 16px;
+            border-radius: 18px;
+            margin-bottom: 15px;
+        }
+        
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #888;
+            border-radius: 50%;
+            margin-right: 4px;
+            animation: typing-animation 1.4s infinite ease-in-out;
+        }
+        
+        .typing-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+        
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+            margin-right: 0;
+        }
+        
+        @keyframes typing-animation {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-5px);
+            }
+        }
+        
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: absolute;
+                height: 100%;
+                z-index: 5;
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+        }
+        
+        .sidebar h2 {
+            margin-bottom: 20px;
+            color: #4285f4;
+        }
+        
+        .sidebar-section {
+            margin-bottom: 25px;
+        }
+        
+        .sidebar-section h3 {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 5px;
+        }
+        
+        .topic-item {
+            padding: 8px 10px;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        
+        .topic-item:hover {
+            background-color: #f0f4ff;
+            color: #4285f4;
+        }
+        
+        .version-info {
+            margin-top: auto;
+            padding-top: 15px;
+            font-size: 12px;
+            color: #888;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Student AI Assistant</h1>
+        <button class="menu-button" id="menuToggle">Menu</button>
+    </div>
+    
+    <div class="container">
+        <div class="sidebar" id="sidebar">
+            <h2>Topics</h2>
+            
+            <div class="sidebar-section">
+                <h3>Academic Help</h3>
+                <div class="topic-item" data-prompt="Can you help me with my math homework?">Math Help</div>
+                <div class="topic-item" data-prompt="I need help with an essay structure.">Essay Writing</div>
+                <div class="topic-item" data-prompt="Can you explain photosynthesis to me?">Science Questions</div>
+                <div class="topic-item" data-prompt="How do I solve this programming problem?">Programming Help</div>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>Self-Assessment</h3>
+                <div class="topic-item" data-prompt="Help me create a study plan for my exams.">Study Planning</div>
+                <div class="topic-item" data-prompt="Can you create a self-assessment quiz about world history?">Knowledge Quiz</div>
+                <div class="topic-item" data-prompt="Help me track my learning progress.">Progress Tracking</div>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>Student Life</h3>
+                <div class="topic-item" data-prompt="How can I improve my time management skills?">Time Management</div>
+                <div class="topic-item" data-prompt="Tips for reducing test anxiety?">Stress Management</div>
+                <div class="topic-item" data-prompt="How can I balance school work and social life?">Work-Life Balance</div>
+            </div>
+            
+            <div class="version-info">
+                Student AI Assistant v1.0
+            </div>
+        </div>
+        
+        <div class="main">
+            <div class="chat-container" id="chatContainer">
+                <div class="message bot-message">
+                    Hi there! I'm your Student AI Assistant. I'm here to help you with academic questions, study planning, self-assessment, and more. How can I assist you today?
+                </div>
+            </div>
+            
+            <div class="input-container">
+                <input type="text" id="userInput" class="input-field" placeholder="Type your message here..." autofocus>
+                <button id="sendButton" class="send-button">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                        <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const userInput = document.getElementById('userInput');
+        const sendButton = document.getElementById('sendButton');
+        const chatContainer = document.getElementById('chatContainer');
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const topicItems = document.querySelectorAll('.topic-item');
+
+        // =========================================
+        // INSERT YOUR GEMINI API KEY HERE
+        // =========================================
+        // Replace 'YOUR_API_KEY_HERE' with your actual Gemini API key
+        const apiKey = 'YOUR_API_KEY_HERE';
+        // =========================================
+
+        // State
+        let isWaitingForResponse = false;
+
+        // Initialize
+        function init() {
+            // Event Listeners
+            sendButton.addEventListener('click', handleSendMessage);
+            userInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    handleSendMessage();
+                }
+            });
+
+            menuToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('active');
+            });
+
+            topicItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    const prompt = item.getAttribute('data-prompt');
+                    userInput.value = prompt;
+                    if (window.innerWidth <= 768) {
+                        sidebar.classList.remove('active');
+                    }
+                    userInput.focus();
+                });
+            });
+        }
+
+        // Handle sending a message
+        function handleSendMessage() {
+            const message = userInput.value.trim();
+            if (message && !isWaitingForResponse) {
+                showUserMessage(message);
+                userInput.value = '';
+                
+                // Check if API key is configured
+                if (apiKey && apiKey !== 'YOUR_API_KEY_HERE') {
+                    getAIResponse(message);
+                } else {
+                    // Fallback if API key is not configured
+                    showBotMessage("The AI service is currently unavailable. Please try again later.");
+                    console.error("Gemini API key not configured. Please add your API key to the script.");
+                }
+            }
+        }
+
+        // Show user message in chat
+        function showUserMessage(message) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message', 'user-message');
+            messageElement.textContent = message;
+            chatContainer.appendChild(messageElement);
+            scrollToBottom();
+        }
+
+        // Show bot message in chat
+        function showBotMessage(message) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message', 'bot-message');
+            
+            // Convert markdown-style code blocks to HTML
+            const formattedMessage = message.replace(/```([\s\S]*?)```/g, (match, code) => {
+                return `<pre><code>${code}</code></pre>`;
+            }).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            
+            messageElement.innerHTML = formattedMessage;
+            chatContainer.appendChild(messageElement);
+            scrollToBottom();
+        }
+
+        // Show typing indicator
+        function showTypingIndicator() {
+            const indicator = document.createElement('div');
+            indicator.classList.add('typing-indicator');
+            indicator.id = 'typingIndicator';
+            
+            for (let i = 0; i < 3; i++) {
+                const dot = document.createElement('div');
+                dot.classList.add('typing-dot');
+                indicator.appendChild(dot);
+            }
+            
+            chatContainer.appendChild(indicator);
+            scrollToBottom();
+        }
+
+        // Remove typing indicator
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+
+        // Scroll chat to bottom
+        function scrollToBottom() {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Get AI response using Gemini API
+        async function getAIResponse(userMessage) {
+            isWaitingForResponse = true;
+            showTypingIndicator();
+            
+            try {
+                // Using Gemini Pro model
+                // Update the model string if you want to use a different model
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        contents: [
+                            {
+                                parts: [
+                                    {
+                                        text: `You are a helpful AI assistant for students. Your role is to provide academic help, study guidance, and self-assessment tools.
+                                        
+                                        The user is a student seeking assistance. Be helpful, educational, and encouraging. Provide detailed explanations that help the student learn, not just get answers.
+                                        
+                                        When helping with homework or academic questions, focus on explaining concepts clearly rather than just providing solutions.
+                                        
+                                        For self-assessment, suggest specific techniques and provide examples when possible.
+                                        
+                                        Answer the following query: ${userMessage}`
+                                    }
+                                ]
+                            }
+                        ],
+                        generationConfig: {
+                            temperature: 0.7,
+                            topK: 40,
+                            topP: 0.95,
+                            maxOutputTokens: 1024,
+                            stopSequences: []
+                        }
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.candidates && data.candidates[0].content.parts[0].text) {
+                    const aiResponse = data.candidates[0].content.parts[0].text;
+                    removeTypingIndicator();
+                    showBotMessage(aiResponse);
+                } else if (data.error) {
+                    throw new Error(data.error.message || "Error getting response from AI");
+                } else {
+                    throw new Error("Unknown error occurred");
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                removeTypingIndicator();
+                showBotMessage(`Sorry, I encountered an error: ${error.message}. Please try again later.`);
+            } finally {
+                isWaitingForResponse = false;
+            }
+        }
+
+        // Initialize the app
+        init();
+    </script>
+</body>
+</html>
